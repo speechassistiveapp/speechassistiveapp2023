@@ -8,6 +8,8 @@ import '../widgets/shapespage.dart';
 import '../widgets/personpage.dart';
 import '../widgets/housepage.dart';
 import '../widgets/schoolpage.dart';
+import '../widgets/functionalpage.dart';
+import '../widgets/addobjectpage.dart';
 
 class DashboardBanners extends StatelessWidget {
   const DashboardBanners({
@@ -170,8 +172,10 @@ class DashboardBanners extends StatelessWidget {
               
               InkWell(
                 onTap: () {
-                  // Handle button press
-                  // Add your desired action here
+                  Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FunctionalPage()),
+              );
                 },
                 child: Container(
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
@@ -250,7 +254,11 @@ class DashboardBanners extends StatelessWidget {
                   children: [
                     InkWell(
                 onTap: () {
-                  print("This is clicked!");
+              // Handle Assessment button click
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddObjectPage()),
+              );
                 },
                 child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

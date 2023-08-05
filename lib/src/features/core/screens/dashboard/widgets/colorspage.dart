@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
-
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -178,9 +179,11 @@ void _showImageModal(String imagePath, String colorName, List<String> words, Lis
                   final cGender = prefs.getString('cGender');
                   playTextToSpeechChild('${colorName}', cGender!);
                 },
-              child: Image.asset(
-                imagePath,
+               child: CachedNetworkImage(
+                imageUrl: 'https://speech-assistive-app.com/assets/images/colors/${colorName}.png',
                 fit: BoxFit.cover,
+                placeholder: (context, url) => LinearProgressIndicator(),
+                errorWidget: (context, url, error) => Icon(Icons.error),
               ),
             ),
             SizedBox(height: 20.0),
@@ -222,7 +225,6 @@ void _showImageModal(String imagePath, String colorName, List<String> words, Lis
 }
 
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,56 +244,84 @@ void _showImageModal(String imagePath, String colorName, List<String> words, Lis
           child: Column(
             children: <Widget>[
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  children: _listItem.asMap().entries.map((entry) {
-                    final int index = entry.key;
-                    final String item = entry.value;
-                    final String colorName = _colorNames[index];
-                    final List<String> wordsForColor = _wordsForColors[index];
-                    final List<String> emojiForWords = _emojiWords[index];
-                    return GestureDetector(
-                      onTap: () => _showImageModal(item, colorName, wordsForColor,emojiForWords),
-                      child: Card(
-                        color: Colors.transparent,
-                        elevation: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            image: DecorationImage(
-                              image: AssetImage(item),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: <Widget>[
-                              Container(
-                                height: 30,
-                                margin: EdgeInsets.symmetric(horizontal: 10),
+                child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  future: _fetchDataFromFirestore(), // Call the function to fetch data
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text("Error: ${snapshot.error}"),
+                      );
+                    } else {
+                      // Data retrieved successfully
+                      final List<Map<String, dynamic>> itemList =
+                          List<Map<String, dynamic>>.from(snapshot.data!['itemList']);
+                      return GridView.count(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        children: itemList.asMap().entries.map((entry) {
+                          final int index = entry.key;
+                          final Map<String, dynamic> item = entry.value;
+                          final String itemImagePath = _listItem[index];
+                          final String colorName = item['_Names'];
+                          final String description = item['_Home'];
+                          final String emoji1 = item['_emojiWords1'];
+                          final String emoji2 = item['_emojiWords2'];
+
+                          final List<String> wordsForColor = [colorName, description];
+                          final List<String> emojiForWords = [emoji1, emoji2];
+
+                          final String imagePath =
+                              'https://speech-assistive-app.com/assets/images/colors/${colorName}.png';
+
+
+                          return GestureDetector(
+                            onTap: () => _showImageModal(itemImagePath, colorName, wordsForColor, emojiForWords),
+                            child: Card(
+                              color: Colors.transparent,
+                              elevation: 0,
+                              child: Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Colors.white.withOpacity(0.4),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    colorName,
-                                    style: TextStyle(
-                                      color: Colors.grey[900],
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                    image: NetworkImage(imagePath), // Use NetworkImage with imagePath
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: <Widget>[
+                                    Container(
+                                      height: 30,
+                                      margin: EdgeInsets.symmetric(horizontal: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        color: Colors.white.withOpacity(0.4),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          colorName,
+                                          style: TextStyle(
+                                            color: Colors.grey[900],
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 10),
+                                  ],
+                                ),
                               ),
-                              SizedBox(height: 10),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }
+                  },
                 ),
               ),
             ],
@@ -302,7 +332,27 @@ void _showImageModal(String imagePath, String colorName, List<String> words, Lis
   }
 }
 
+Future<DocumentSnapshot<Map<String, dynamic>>> _fetchDataFromFirestore() async {
+    try {
+      // Access the Firebase Firestore instance
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
+      // The collection name and document ID from where you want to fetch data
+      final CollectionReference<Map<String, dynamic>> collectionRef =
+          firestore.collection('Assets');
+      final DocumentReference<Map<String, dynamic>> documentRef =
+          collectionRef.doc('colorpage');
+
+      // Fetch the document snapshot
+      final DocumentSnapshot<Map<String, dynamic>> snapshot = await documentRef.get();
+
+      return snapshot;
+    } catch (e) {
+      // Handle any errors that occurred during the process
+      print('Error fetching data from Firestore: $e');
+      throw e;
+    }
+  }
 
 // Feed your own stream of bytes into the player
 class MyCustomSource extends StreamAudioSource {

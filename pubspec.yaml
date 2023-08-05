@@ -74,6 +74,9 @@ dependencies:
   numeral: ^2.0.1
   number_to_words_english: ^2.0.2
   confetti: ^0.7.0
+  image_picker: ^0.8.4+4
+  flutter_image_compress: ^2.0.4
+  cached_network_image: ^3.2.3
 
 dev_dependencies:
   flutter_test:
@@ -104,8 +107,10 @@ flutter:
   assets:
     - assets/
     - assets/logo/
+    - assets/api/
     - assets/images/
     - assets/images/profile/
+    - assets/images/addobject/
     - assets/images/colors/
     - assets/images/shapes/
     - assets/images/persons/

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Upload Image</title>
+</head>
+
+<body>
+    <h1>Upload Image</h1>
+    <form id="uploadForm">
+        <label for="image">Select Image:</label>
+        <input type="file" id="image" name="image" accept="image/*" required><br><br>
+        <label for="filename">Enter Filename:</label>
+        <input type="text" id="filename" name="filename" required><br><br>
+        <input type="submit" value="Upload Image">
+    </form>
+
+    <div id="responseMessage"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            var formData = new FormData();
+    
+            var fileInput = document.getElementById('image');
+            var file = fileInput.files[0];
+    
+            var reader = new FileReader();
+    
+            reader.onloadend = function () {
+                // Base64 encode the image
+                var base64EncodedImage = reader.result.split(',')[1];
+    
+                // Add the base64 encoded image and filename to the form data
+                formData.append('image', base64EncodedImage);
+                formData.append('filename', document.getElementById('filename').value);
+    
+                // Send the form data to the addobject.php API
+                fetch('addobject.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            document.getElementById('responseMessage').textContent = data.message;
+    
+                            // Display the base64EncodedImage value in a new paragraph
+                            var base64ImageParagraph = document.createElement('p');
+                            base64ImageParagraph.textContent = 'Base64 Encoded Image: ' + base64EncodedImage;
+                            document.getElementById('responseMessage').appendChild(base64ImageParagraph);
+                        } else {
+                            document.getElementById('responseMessage').textContent = 'Error: ' + data.message;
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('responseMessage').textContent = 'Error: ' + error;
+                    });
+            };
+    
+            reader.readAsDataURL(file);
+        });
+    </script>
+    
+</body>
+
+</html>
