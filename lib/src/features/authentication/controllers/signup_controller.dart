@@ -36,7 +36,7 @@ class SignUpController extends GetxController {
       prefs.setString('email', user.email); // Save the email to preferences
       prefs.setString('pName', user.fullName); // Save the email to preferences
       prefs.setString('pGender', user.gender); // Save the email to preferences
-      prefs.setString('pAvatar', user.avatar); // Save the email to preferences
+      prefs.setString('pAvatar', user.avatar + '.png'); // Save the email to preferences
       prefs.setBool('isLogged', false); // Save the email to preferences
 
       final childInfo = user.childInfo ?? '';
@@ -48,7 +48,7 @@ class SignUpController extends GetxController {
       final avatar = childInfoMap['Avatar'];
       prefs.setString('cName', fullName); // Save the email to preferences
       prefs.setString('cGender', gender); // Save the email to preferences
-      prefs.setString('cAvatar', avatar); // Save the email to preferences
+      prefs.setString('cAvatar', avatar + '.png'); // Save the email to preferences
     }// Save the email to preferences
       await emailAuthentication(user.email, user.password); //Perform authentication
       await userRepo.createUser(user,childUser); //Store Data in FireStore

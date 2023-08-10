@@ -8,12 +8,15 @@ import 'package:login_flutter_app/src/constants/text_strings.dart';
 import 'package:login_flutter_app/src/features/core/screens/profile/update_profile_screen.dart';
 import 'package:login_flutter_app/src/features/core/screens/profile/widgets/image_with_icon.dart';
 import 'package:login_flutter_app/src/features/core/screens/profile/widgets/profile_menu.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../constants/colors.dart';
 import '../../../../repository/authentication_repository/authentication_repository.dart';
 import '../../../../repository/user_repository/user_repository.dart';
 import '../../../authentication/models/user_model.dart';
 import 'all_users.dart';
+import 'edit_child_profile.dart';
+import 'edit_profile.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -47,8 +50,7 @@ class ProfileScreen extends StatelessWidget {
                     SizedBox(
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: (){},
-                        //onPressed: () => Get.to(() => UpdateProfileScreen()),
+                        onPressed: () => _showEditProfileModal(context),
                         style: ElevatedButton.styleFrom(
                             backgroundColor: tPrimaryColor, side: BorderSide.none, shape: const StadiumBorder()),
                         child: const Text(tEditProfile, style: TextStyle(color: tDarkColor)),
@@ -61,7 +63,11 @@ class ProfileScreen extends StatelessWidget {
                     
 
                     /// -- MENU
-                    ProfileMenuWidget(title: "Child Profile", icon: LineAwesomeIcons.user_check, onPress: () {
+                    ProfileMenuWidget(title: "Child Profile", icon: LineAwesomeIcons.user_check, onPress: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      final cName = prefs.getString('cName') ?? '';
+                      final cGender = prefs.getString('cGender') ?? '';
+                      final cAvatar = prefs.getString('cAvatar') ?? '';
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -81,18 +87,40 @@ class ProfileScreen extends StatelessWidget {
                           return AlertDialog(
                             title: Text("Child Profile"),
                             content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Image.asset('assets/images/profile/${avatar}.png', width: 120, height: 120), // Replace with the actual image path
-                                const SizedBox(height: 10),
-                                 Text(fullName, style: Theme.of(context).textTheme.headlineMedium), // Use the user's full name here
-                                Text(gender),
-                              ],
-                            ),
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    
+    // Conditional check for displaying the image or placeholder icon
+              avatar != null
+                  ? Image.network(
+                      'https://speech-assistive-app.com/assets/images/profile/${cAvatar}',
+                      width: 120,
+                      height: 120,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          LineAwesomeIcons.user, // Placeholder icon
+                          size: 120,
+                        );
+                      },
+                    )
+                  : Icon(
+                      LineAwesomeIcons.user, // Placeholder icon
+                      size: 120,
+                    ),
+              const SizedBox(height: 10),
+              
+              Text(cName, style: Theme.of(context).textTheme.headlineMedium),
+              Text(cGender),
+            ],
+          ),
+
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
                                 child: Text("Close"),
+                              ),TextButton(
+                                onPressed: () => _showEditChildProfileModal(context),
+                                child: Text("Update"),
                               ),
                             ],
                           );
@@ -144,4 +172,38 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showEditProfileModal(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Edit Profile'),
+          ),
+          body: EditProfileModal(),
+        );
+      },
+    ),
+  );
+}
+
+void _showEditChildProfileModal(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (BuildContext context) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Edit Child Profile'),
+          ),
+          body: EditChildProfileModal(),
+        );
+      },
+    ),
+  );
 }

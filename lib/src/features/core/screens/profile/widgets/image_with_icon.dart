@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../constants/colors.dart';
 import '../../../../../constants/image_strings.dart';
@@ -13,8 +14,8 @@ class ImageWithIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<UserModel>(
-      future: UserRepository.instance.getUserDetails('email@example.com'), // Replace 'email@example.com' with the actual email of the logged-in user
+    return FutureBuilder<String?>(
+      future:  _getUserAvatar(),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           final user = snapshot.data!;
@@ -25,30 +26,40 @@ class ImageWithIcon extends StatelessWidget {
                 height: 120,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(100),
-                  child: Image.asset('assets/images/profile/${user.avatar}.png'),
+                  child: FutureBuilder<String?>(
+                    future: _getUserAvatar(),
+                    builder: (context, avatarSnapshot) {
+                      if (avatarSnapshot.hasData && avatarSnapshot.data != null) {
+                        return Image.network(
+                          'https://speech-assistive-app.com/assets/images/profile/${avatarSnapshot.data}',
+                          loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                          errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
+                            return Icon(Icons.person, size: 120);
+                          },
+                        );
+                      } else {
+                        // Placeholder widget when avatar data is loading or not available
+                        return const Placeholder();
+                      }
+                    },
+                  ),
                 ),
               ),
-              /*Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 35,
-                  height: 35,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    color: tPrimaryColor,
-                  ),
-                  child: const Icon(
-                    LineAwesomeIcons.alternate_pencil,
-                    color: Colors.black,
-                    size: 20,
-                  ),
-                ),
-              ),*/
             ],
           );
         } else {
-          // Placeholder widget when data is loading or not available
+          // Placeholder widget when user data is loading or not available
           return SizedBox(
             width: 120,
             height: 120,
@@ -58,4 +69,12 @@ class ImageWithIcon extends StatelessWidget {
       },
     );
   }
+
+  Future<String?> _getUserAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserEmail = prefs.getString('email');
+    final user = await UserRepository.instance.getUserDetails(currentUserEmail ?? '');
+    return user.avatar;
+  }
 }
+

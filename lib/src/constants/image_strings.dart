@@ -23,7 +23,7 @@ const String tGoogleLogoImage = "assets/logo/google-logo.png";
 
 
 // -- Forget Password Images
-const String tForgetPasswordImage = "assets/images/forget_password/forget-password.png";
+const String tForgetPasswordImage = "assets/images/welcome_images/welcome-screen-image.png";
 
 
 // -- Dashboard Images

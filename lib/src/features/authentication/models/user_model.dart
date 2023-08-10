@@ -25,7 +25,7 @@ class UserModel {
       "Phone": phoneNo,
       "Password": password,
       "Gender": gender,
-      "Avatar": avatar,
+      "Avatar": avatar +'.png',
       "childUser": childInfo, 
     };
   }
@@ -62,7 +62,7 @@ class ChildUser {
     return {
       "FullName": fullName,
       "Gender": gender,
-      "Avatar": avatar,
+      "Avatar": avatar + '.png',
     };
   }
 

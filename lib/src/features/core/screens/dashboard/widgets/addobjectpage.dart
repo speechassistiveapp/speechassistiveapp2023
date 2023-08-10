@@ -209,11 +209,11 @@ Center(
         final newImagePath = '${appDocumentsDir.path}/$newImageFileName';
         final File newImageFile = File(pickedImage.path);
 
-        // Remove EXIF data and compress the image
+       // Remove EXIF data and compress the image
         final compressedImageBytes = await FlutterImageCompress.compressWithFile(
           newImageFile.path,
           quality: 85, // Adjust the quality as needed
-        );
+        );  
 
         if (compressedImageBytes != null) {
           await writeToFile(newImagePath, Uint8List.fromList(compressedImageBytes));
